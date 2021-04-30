@@ -2,6 +2,17 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>PlotWidget</name>
+    <message>
+        <source>Time [m:s]</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Concentration</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SettingsWidget</name>
     <message>
         <source>Use blod volume calculator</source>

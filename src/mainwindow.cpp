@@ -1,9 +1,10 @@
 #include "mainwindow.h"
+#include "plotwidget.h"
 #include "settingswidget.h"
 
 #include <QSplitter>
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     auto mainWidget = new QSplitter(Qt::Horizontal, this);
@@ -12,9 +13,10 @@ MainWindow::MainWindow(QWidget *parent)
     auto settingsWidget = new SettingsWidget(mainWidget);
     mainWidget->addWidget(settingsWidget);
 
+    auto plotWidget = new PlotWidget(mainWidget);
+    mainWidget->addWidget(plotWidget);
 }
 
 MainWindow::~MainWindow()
 {
 }
-

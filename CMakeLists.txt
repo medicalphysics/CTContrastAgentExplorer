@@ -8,15 +8,11 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets LinguistTools Charts REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets LinguistTools Charts REQUIRED)
-#find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets LinguistTools Charts)
-#find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets LinguistTools Charts)
-
 
 set(TS_FILES translations/CTCAExplorer_en_US.ts)
 
@@ -24,11 +20,17 @@ set(PROJECT_SOURCES
         src/main.cpp
         src/mainwindow.cpp
         src/settingswidget.cpp
+        src/plotwidget.cpp
+        src/node.cpp
+        src/nodemanager.cpp
         ${TS_FILES}
 )
 set(PROJECT_HEADERS
     include/mainwindow.h
     include/settingswidget.h
+    include/plotwidget.h
+    include/node.h
+    include/nodemanager.h
     )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -36,9 +38,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         ${PROJECT_HEADERS}
     )
-    qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})    
-else()    
-    add_executable(CTCAExplorer WIN32
+    qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+else()
+    add_executable(CTCAExplorer #WIN32
         ${PROJECT_SOURCES}
         ${PROJECT_HEADERS}
     )

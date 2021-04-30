@@ -72,6 +72,6 @@ Thumbs.db
 *.exe
 
 /.vs
-/out/build
+/out
 /CMakeSettings.json
 /CMakeLists.txt.user
