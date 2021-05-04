@@ -9,13 +9,13 @@ class Node {
 public:
     Node(int ID, double volume, std::size_t steps = 3600, double total_time = 1);
     ~Node();
+    int id() { return m_ID; }
+    void changeID(const int ID);
+
     void addInputNode(Node* node, double flow);
-    void addOutputNode(Node* node, double flow);
-    void addOrgan(double volume, double PS = 4.0);
+    void addOrgan(double volume, double PS = 240.0);
     Node* organ() { return m_organPointer; }
     double getConcentration(std::size_t step);
-
-    bool checkInflowOutflow() const;
 
     void setTotalSteps(std::size_t steps) { m_totalSteps = steps; }
     void setStepSize(double stepSize) { m_stepSize = stepSize; }
@@ -25,7 +25,7 @@ public:
 protected:
     void deleteOrganNode();
     void advanceTo(std::size_t step);
-    double evaluate(std::size_t, double) const;
+    virtual double evaluate(std::size_t, double C0) const;
 
     std::vector<double> m_concentration;
     int m_ID = 0;
@@ -35,30 +35,26 @@ protected:
     double m_stepSize = 0.1;
     Node* m_organPointer = nullptr;
     std::vector<std::pair<double, Node*>> m_inputs;
-    std::vector<std::pair<double, Node*>> m_outputs;
-};
-
-template <int IN, int OUT>
-class OneCompartment : public Node {
-public:
-private:
-    std::array<Node*, IN> m_inputs;
-    std::array<Node*, OUT> m_outputs;
 };
 
 class ArterialInput : public Node {
 public:
     ArterialInput(int ID, double volume, std::size_t steps = 3600, double total_time = 1);
 
-    template <std::regular_invocable<double> F>
-    requires std::is_same<std::invoke_result_t<F, double>, double>::value void setInputFunction(const F function)
+    template <std::regular_invocable<double,double> F>
+    requires std::is_same<std::invoke_result_t<F, double,double>, double>::value void setInputFunction(const F function)
     {
         const auto s = stepSize();
         for (std::size_t i = 0; i < totalSteps(); ++i) {
-            m_concentration[i] = function(i * s);
+            m_inflow[i] = function(i * s, s);
         }
-        m_current_step = m_concentration.size() - 1;
     }
+
+protected:
+    double evaluate(std::size_t step, double C0) const override;
+
+private:
+    std::vector<double> m_inflow;
 };
 
 class RenalClearence : public Node {
@@ -67,8 +63,8 @@ public:
     void setRenalClearenceRate(double rate) { m_renalClearenceRate = rate; }
 
 protected:
-    double evaluate(std::size_t step, double C0) const;
+    double evaluate(std::size_t step, double C0) const override;
 
 private:
-    double m_renalClearenceRate = 4;
+    double m_renalClearenceRate = 240.0;
 };

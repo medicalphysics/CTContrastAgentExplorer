@@ -1,5 +1,7 @@
 #pragma once
 
+#include "nodemanager.h"
+
 #include <QMainWindow>
 
 class MainWindow : public QMainWindow {
@@ -8,4 +10,7 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
+
+private:
+    NodeManager m_nodeManager;
 };

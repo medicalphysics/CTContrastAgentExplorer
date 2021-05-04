@@ -15,6 +15,11 @@ MainWindow::MainWindow(QWidget* parent)
 
     auto plotWidget = new PlotWidget(mainWidget);
     mainWidget->addWidget(plotWidget);
+
+    m_nodeManager.testNetwork();
+
+
+
 }
 
 MainWindow::~MainWindow()

@@ -21,17 +21,25 @@ set(PROJECT_SOURCES
         src/mainwindow.cpp
         src/settingswidget.cpp
         src/plotwidget.cpp
-        src/node.cpp
-        src/nodemanager.cpp
         ${TS_FILES}
 )
 set(PROJECT_HEADERS
     include/mainwindow.h
     include/settingswidget.h
-    include/plotwidget.h
+    include/plotwidget.h    
+    )
+
+set(SOLVER_SOURCES 
+    src/node.cpp
+    src/nodemanager.cpp
+    )
+set(SOLVER_HEADER
     include/node.h
     include/nodemanager.h
     )
+
+add_library(Solver ${SOLVER_HEADER} ${SOLVER_SOURCES})
+target_include_directories(Solver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(CTCAExplorer WIN32
@@ -40,15 +48,17 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     )
     qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 else()
-    add_executable(CTCAExplorer #WIN32
+    add_executable(CTCAExplorer WIN32
         ${PROJECT_SOURCES}
         ${PROJECT_HEADERS}
     )
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
-target_link_libraries(CTCAExplorer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
+target_link_libraries(CTCAExplorer PRIVATE Solver Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
 target_include_directories(CTCAExplorer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_subdirectory(tests)
 
 
 if (WIN32)
@@ -65,6 +75,7 @@ add_custom_target(addresources ALL)
 set (fileresources
         "resources/icons/splash.png"
         "resources/icons/logo.png"
+        "resources/data/organs.csv"
         )
 foreach(fileresource ${fileresources})
         set(outpath "${CMAKE_BINARY_DIR}/${fileresource}")

@@ -19,6 +19,14 @@ Node::~Node()
     deleteOrganNode();
 }
 
+void Node::changeID(int ID)
+{
+    m_ID = ID;
+    if (m_organPointer) {
+        m_organPointer->changeID(ID);
+    }
+}
+
 void Node::addInputNode(Node* node, double flow)
 {
     node->setStepSize(m_stepSize);
@@ -26,13 +34,6 @@ void Node::addInputNode(Node* node, double flow)
     m_inputs.push_back(std::make_pair(flow, node));
 }
 
-void Node::addOutputNode(Node* node, double flow)
-{
-    node->setStepSize(m_stepSize);
-    node->setTotalSteps(m_totalSteps);
-    node->addInputNode(this, flow);
-    m_outputs.push_back(std::make_pair(flow, node));
-}
 
 void Node::deleteOrganNode()
 {
@@ -40,13 +41,6 @@ void Node::deleteOrganNode()
         for (auto it = m_inputs.begin(); it != m_inputs.end();) {
             if (it->second == m_organPointer) {
                 it = m_inputs.erase(it);
-            } else {
-                it++;
-            }
-        }
-        for (auto it = m_outputs.begin(); it != m_outputs.end();) {
-            if (it->second == m_organPointer) {
-                it = m_outputs.erase(it);
             } else {
                 it++;
             }
@@ -59,7 +53,8 @@ void Node::addOrgan(double volume, double PS)
 {
     deleteOrganNode();
     m_organPointer = new Node(m_ID, volume, m_totalSteps, m_stepSize * m_totalSteps);
-    addOutputNode(m_organPointer, PS);
+    this->addInputNode(m_organPointer, PS);
+    m_organPointer->addInputNode(this, PS);
 }
 
 double Node::getConcentration(std::size_t step)
@@ -68,19 +63,6 @@ double Node::getConcentration(std::size_t step)
         advanceTo(step);
     }
     return m_concentration[step];
-}
-
-bool Node::checkInflowOutflow() const
-{
-    double total_flow = 0;
-    for (const auto& [flow, node] : m_inputs) {
-        total_flow += flow;
-    }
-    for (const auto& [flow, node] : m_outputs) {
-        total_flow -= flow;
-    }
-
-    return std::abs(total_flow) < 0.001;
 }
 
 double Node::evaluate(std::size_t step, double C0) const
@@ -92,10 +74,10 @@ double Node::evaluate(std::size_t step, double C0) const
         const auto Cin = node->getConcentration(step);
         total += flow * (Cin - C0) / m_volume;
     }
-    for (const auto& [flow, node] : m_outputs) {
+    /*for (const auto& [flow, node] : m_outputs) {
         const auto Cin = node->getConcentration(step);
         total += flow * (C0 - Cin) / m_volume;
-    }
+    }*/
 
     return total;
 }
@@ -116,6 +98,13 @@ void Node::advanceTo(std::size_t step)
 ArterialInput::ArterialInput(int ID, double volume, std::size_t steps, double total_time)
     : Node(ID, volume, steps, total_time)
 {
+    m_inflow.resize(m_concentration.size());
+}
+
+double ArterialInput::evaluate(std::size_t step, double C0) const
+{
+    const double total = Node::evaluate(step, C0);
+    return total + m_inflow[step] / m_volume;
 }
 
 RenalClearence::RenalClearence(int ID, double volume, std::size_t steps, double total_time)
