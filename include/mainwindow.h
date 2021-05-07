@@ -1,8 +1,9 @@
 #pragma once
 
-#include "nodemanager.h"
+#include "nodemanagerinterface.h"
 
 #include <QMainWindow>
+#include <QThread>
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -12,5 +13,6 @@ public:
     ~MainWindow();
 
 private:
-    NodeManager m_nodeManager;
+    NodeManagerInterface* m_nodeInterface = nullptr;
+    QThread m_workerThread;
 };

@@ -15,30 +15,39 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets LinguistTools Charts REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets LinguistTools Charts REQUIRED)
 
 set(TS_FILES translations/CTCAExplorer_en_US.ts)
+set(RS_FILES resources/resources.qrc)
+
+set(SOLVER_SOURCES
+    src/node.cpp
+    src/nodemanager.cpp
+    )
+set(SOLVER_HEADERS
+    include/node.h
+    include/nodemanager.h
+    )
 
 set(PROJECT_SOURCES
         src/main.cpp
         src/mainwindow.cpp
         src/settingswidget.cpp
         src/plotwidget.cpp
+        src/nodemanagerinterface.cpp
+        ${SOLVER_SOURCES}
         ${TS_FILES}
+        ${RS_FILES}
 )
 set(PROJECT_HEADERS
     include/mainwindow.h
     include/settingswidget.h
-    include/plotwidget.h    
+    include/plotwidget.h
+    include/nodemanagerinterface.h
+    include/series_type.h
+    ${SOLVER_HEADERS}
     )
 
-set(SOLVER_SOURCES 
-    src/node.cpp
-    src/nodemanager.cpp
-    )
-set(SOLVER_HEADER
-    include/node.h
-    include/nodemanager.h
-    )
 
-add_library(Solver ${SOLVER_HEADER} ${SOLVER_SOURCES})
+
+add_library(Solver ${SOLVER_HEADERS} ${SOLVER_SOURCES})
 target_include_directories(Solver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -71,22 +80,22 @@ endif(WIN32)
 
 
 #Copying application resources
-add_custom_target(addresources ALL)
-set (fileresources
-        "resources/icons/splash.png"
-        "resources/icons/logo.png"
-        "resources/data/organs.csv"
-        )
-foreach(fileresource ${fileresources})
-        set(outpath "${CMAKE_BINARY_DIR}/${fileresource}")
-        set(inpath "${CMAKE_CURRENT_SOURCE_DIR}/${fileresource}")
-        message("Setup copying ${inpath} to ${outpath}")
-        add_custom_command(TARGET addresources POST_BUILD
-                COMMENT "Copying file ${inpath} to ${outpath}."
-                DEPENDS ${inpath}
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${inpath}
-                ${outpath}
-        )
-endforeach()
+#add_custom_target(addresources ALL)
+#set (fileresources
+#        "resources/icons/splash.png"
+#        "resources/icons/logo.png"
+#        "resources/data/organs.csv"
+#        )
+#foreach(fileresource ${fileresources})
+#        set(outpath "${CMAKE_BINARY_DIR}/${fileresource}")
+#        set(inpath "${CMAKE_CURRENT_SOURCE_DIR}/${fileresource}")
+#        message("Setup copying ${inpath} to ${outpath}")
+#        add_custom_command(TARGET addresources POST_BUILD
+#                COMMENT "Copying file ${inpath} to ${outpath}."
+#                DEPENDS ${inpath}
+#                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#                ${inpath}
+#                ${outpath}
+#        )
+#endforeach()
 

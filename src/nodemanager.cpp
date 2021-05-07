@@ -1,3 +1,4 @@
+#include "..\include\nodemanager.h"
 #include "nodemanager.h"
 
 #include <exception>
@@ -9,27 +10,13 @@ NodeManager::NodeManager()
 {
     m_nodes.clear();
 }
-
-void NodeManager::testNetwork()
+NodeManager::NodeManager(const std::vector<std::string>& organConfigLines)
 {
-
-    auto success = readOrganNetworkFromFile("./resources/data/organs.csv");
-    if (m_arterialNode) {
-        const auto injection_time = 20.0 / 60.0;
-        const auto injection_volume = 125.0;
-        auto f = [=](double time, double step) -> double {
-            const auto volume = 300.0;
-            const auto rate = 4.0 * 60;
-            const auto end = volume / rate;
-            return time <= end ? volume / end * step : 0.0;
-
-        };
-        m_arterialNode->setInputFunction(f);
-
-        for (std::size_t i = 0; i < m_arterialNode->totalSteps(); ++i) {
-            std::cout << i << ", " << m_arterialNode->getConcentration(i) << std::endl;
-        }
-    }
+    readOrganNetworkFromText(organConfigLines);
+}
+NodeManager::~NodeManager()
+{
+    m_nodes.clear();
 }
 
 void NodeManager::clearNodes()
@@ -82,13 +69,9 @@ std::vector<std::string> splitString(const std::string& line, const std::string&
     return res;
 }
 
-bool NodeManager::readOrganNetworkFromFile(const std::string& path)
+void NodeManager::readOrganNetworkFromText(const std::vector<std::string>& lines)
 {
-    std::ifstream file(path);
-    auto success = file.good();
-    if (!success) {
-        return success;
-    }
+    clearNodes();
 
     struct Connection {
         int ID = 0;
@@ -98,8 +81,7 @@ bool NodeManager::readOrganNetworkFromFile(const std::string& path)
 
     std::vector<Connection> connections;
 
-    std::string line;
-    while (std::getline(file, line)) {
+    for (const auto& line : lines) {
         const auto strings = splitString(line);
         if (strings.size() > 4) {
             if (strings.at(0).at(0) != '#') {
@@ -111,16 +93,16 @@ bool NodeManager::readOrganNetworkFromFile(const std::string& path)
                     const auto IVvolume = std::stod(strings.at(2));
                     const auto ECvolume = std::stod(strings.at(3));
                     if (ID == 0) {
-                        m_arterialNode = new ArterialInput(ID, IVvolume, m_iterationSteps, m_simulationTime);
+                        m_arterialNode = new ArterialInput(ID, name, IVvolume, m_stepSize);
                         m_nodes.push_back(m_arterialNode);
                     } else if (ID == 255) {
-                        auto node = new RenalClearence(ID, IVvolume, m_iterationSteps, m_simulationTime);
+                        auto node = new RenalClearence(ID, name, IVvolume, m_stepSize);
                         if (ECvolume > 0.0) {
                             node->addOrgan(ECvolume, m_organPS);
                         }
                         m_nodes.push_back(node);
                     } else {
-                        auto node = new Node(ID, IVvolume, m_iterationSteps, m_simulationTime);
+                        auto node = new Node(ID, name, IVvolume, m_stepSize);
                         if (ECvolume > 0.0) {
                             node->addOrgan(ECvolume, m_organPS);
                         }
@@ -148,7 +130,7 @@ bool NodeManager::readOrganNetworkFromFile(const std::string& path)
     }
 
     std::map<int, int> id_map;
-    for (int i = 0; i < m_nodes.size(); ++i) {
+    for (int i = 0; i < static_cast<int>(m_nodes.size()); ++i) {
         const auto id = m_nodes[i]->id();
         if (id_map.count(id) > 0) {
             throw std::invalid_argument("ID of Node already exists");
@@ -164,5 +146,107 @@ bool NodeManager::readOrganNetworkFromFile(const std::string& path)
         node->addInputNode(inputNode, c.flow);
     }
 
-    return success;
+    for (auto n : m_nodes) {
+        const auto volumeScaling = m_bloodVolume / referenceBloodVolume();
+        const auto flowScaling = m_cardiacOutput / referenceCardiacOutput();
+        n->setBloodVolumeScaling(volumeScaling);
+        n->setCardiacOutputScaling(flowScaling);
+    }
+    if (m_renalNode) {
+        m_renalNode->setRenalClearenceRate(m_renalClearenceRate);
+    }
+}
+
+double NodeManager::getConcentration(const int ID, const double time)
+{
+    if (ID == 255) {
+        auto last = m_nodes.back();
+        if (last->id() == ID)
+            return last->getConcentration(time);
+    }
+    if (ID < static_cast<int>(m_nodes.size()) && ID >= 0) {
+        auto node = m_nodes[ID];
+        if (node->id() == ID)
+            return node->getConcentration(time);
+    }
+    return -1;
+}
+
+void NodeManager::resetNodes()
+{
+    for (auto n : m_nodes) {
+        n->resetNode();
+    }
+}
+
+void NodeManager::setStepSize(const double step)
+{
+    m_stepSize = step;
+    for (auto n : m_nodes) {
+        n->setStepSize(step);
+    }
+}
+
+void NodeManager::setOrganPS(const double PS)
+{
+    m_organPS = PS;
+    for (auto n : m_nodes) {
+        n->setOrganPS(PS);
+    }
+}
+
+void NodeManager::setBolusInjection(const double injection_time, const double volume, const double strenght)
+{
+    if (m_arterialNode) {
+        m_arterialNode->setInput(volume, injection_time, strenght);
+        resetNodes();
+    }
+}
+
+void NodeManager::setBloodVolume(const double BV)
+{
+    m_bloodVolume = BV;
+    const auto scaling = m_bloodVolume / referenceBloodVolume();
+    for (auto n : m_nodes) {
+        n->setBloodVolumeScaling(scaling);
+    }
+}
+
+void NodeManager::setCardiacOutput(const double CO)
+{
+
+    m_cardiacOutput = CO;
+    const auto scaling = CO / referenceCardiacOutput();
+    for (auto n : m_nodes) {
+        n->setCardiacOutputScaling(scaling);
+    }
+}
+
+void NodeManager::setRenalClearenceRate(const double rate)
+{
+    m_renalClearenceRate = rate;
+    if (m_renalNode) {
+        m_renalNode->setRenalClearenceRate(rate);
+    }
+    resetNodes();
+}
+
+double NodeManager::bloodVolume() const
+{
+    const double a = m_isMale ? 33.164 : 34.85;
+    const double b = m_isMale ? 1.229 : 1.954;
+
+    return a * std::pow(m_patientHeight / 2.54, 0.725) * std::pow(m_patientWeight / 2.2, 0.425) - b;
+}
+double NodeManager::cardiacOutput() const
+{
+    const double ref = 36.36 * std::pow(m_patientHeight / 2.54, 0.725) * std::pow(m_patientWeight / 2.2, 0.425);
+
+    return ref * (1.0 - (m_patientAge - 30.0) * 1.01 / 100.0);
+}
+
+double NodeManager::renalClearence() const
+{
+    const double Q = m_isMale ? 1 : 0.85;
+    return Q * ((140.0 - m_patientAge) * m_patientWeight) / (72 * m_patientCreatinine);
 }

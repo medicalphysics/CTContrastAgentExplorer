@@ -3,15 +3,14 @@
 
 #include <cmath>
 
-Node::Node(int ID, double volume, std::size_t steps, double total_time)
+Node::Node(int ID, const std::string& name, const double volume, const double stepSize)
     : m_ID(ID)
     , m_volume(std::abs(volume))
-    , m_totalSteps(steps)
-    , m_stepSize(std::abs(total_time) / steps)
+    , m_stepSize(stepSize)
+    , m_name(name)
 {
-    m_totalSteps = std::max(m_totalSteps, std::size_t { 1 });
-    m_concentration.resize(m_totalSteps);
-    m_concentration[0] = 0;
+    m_concentration.clear();
+    m_concentration.resize(2048, 0.0);
 }
 
 Node::~Node()
@@ -30,10 +29,8 @@ void Node::changeID(int ID)
 void Node::addInputNode(Node* node, double flow)
 {
     node->setStepSize(m_stepSize);
-    node->setTotalSteps(m_totalSteps);
     m_inputs.push_back(std::make_pair(flow, node));
 }
-
 
 void Node::deleteOrganNode()
 {
@@ -52,68 +49,139 @@ void Node::deleteOrganNode()
 void Node::addOrgan(double volume, double PS)
 {
     deleteOrganNode();
-    m_organPointer = new Node(m_ID, volume, m_totalSteps, m_stepSize * m_totalSteps);
+    m_organPointer = new Node(m_ID, m_name + " Extra Vascular", volume, m_stepSize);
     this->addInputNode(m_organPointer, PS);
     m_organPointer->addInputNode(this, PS);
 }
 
-double Node::getConcentration(std::size_t step)
+void Node::resetNode()
+{
+    m_current_step = 0;
+    if (m_organPointer) {
+        m_organPointer->resetNode();
+    }
+}
+
+void Node::setStepSize(const double step)
+{
+    resetNode();
+    m_stepSize = std::abs(step);
+    if (m_organPointer) {
+        m_organPointer->setStepSize(step);
+    }
+}
+
+void Node::setOrganPS(const double PS)
+{
+    if (m_organPointer) {
+        resetNode();
+        const auto organ_volume = m_organPointer->volume();
+        deleteOrganNode();
+        addOrgan(organ_volume, PS);
+    }
+}
+
+void Node::setCardiacOutputScaling(const double scaling)
+{
+    resetNode();
+    m_flowScaling = scaling;
+    if (m_organPointer) {
+        m_organPointer->setCardiacOutputScaling(scaling);
+    }
+}
+void Node::setBloodVolumeScaling(const double scaling)
+{
+    resetNode();
+    m_volumeScaling = scaling;
+    if (m_organPointer) {
+        m_organPointer->setBloodVolumeScaling(scaling);
+    }
+}
+
+template <std::floating_point T>
+inline T interp(const T x, const T x0, const T x1, const T y0, const T y1)
+{
+    return (x - x0) * (y1 - y0) / (x1 - x0) + y0;
+}
+
+double Node::getConcentration(const double time)
+{
+    const std::size_t rstep = std::max(static_cast<std::size_t>(std::ceil(time / m_stepSize)), std::size_t { 1 });
+    const auto y1 = getConcentration(rstep);
+
+    return interp(time, m_stepSize * (rstep - 1), m_stepSize * rstep, m_concentration[rstep - 1], m_concentration[rstep]);
+}
+double Node::getConcentration(const std::size_t step)
 {
     if (step > m_current_step) {
+        if (m_current_step >= m_concentration.size()-1) {
+            m_concentration.resize(m_concentration.size() + 1024, 0.0);
+        }
         advanceTo(step);
     }
     return m_concentration[step];
 }
 
-double Node::evaluate(std::size_t step, double C0) const
+double Node::evaluate(const std::size_t step, const double C0) const
 {
 
     double total = 0;
 
     for (const auto& [flow, node] : m_inputs) {
         const auto Cin = node->getConcentration(step);
-        total += flow * (Cin - C0) / m_volume;
+        total += flow * m_flowScaling * (Cin - C0) / (m_volume * m_volumeScaling);
     }
-    /*for (const auto& [flow, node] : m_outputs) {
-        const auto Cin = node->getConcentration(step);
-        total += flow * (C0 - Cin) / m_volume;
-    }*/
 
     return total;
 }
 
-void Node::advanceTo(std::size_t step)
+void Node::advanceTo(const std::size_t step)
 {
-    while (m_current_step < step) {
+    if (step >= m_concentration.size()) {
+        m_concentration.resize(step, 0.0);
+    }
+
+    while (m_current_step <= step) {
         const double Co = m_concentration[m_current_step];
         const double k1 = evaluate(m_current_step, Co);
         const double k2 = evaluate(m_current_step, Co + m_stepSize * k1 * 0.5);
         const double k3 = evaluate(m_current_step, Co + m_stepSize * k2 * 0.5);
         const double k4 = evaluate(m_current_step, Co + m_stepSize * k3);
+
         m_current_step++;
+
         m_concentration[m_current_step] = Co + m_stepSize * (k1 + 2 * k2 + 2 * k3 + k4) / 6;
     }
 }
 
-ArterialInput::ArterialInput(int ID, double volume, std::size_t steps, double total_time)
-    : Node(ID, volume, steps, total_time)
+ArterialInput::ArterialInput(int ID, const std::string& name, double volume, double stepSizeMax)
+    : Node(ID, name, volume, stepSizeMax)
 {
-    m_inflow.resize(m_concentration.size());
+    
 }
 
-double ArterialInput::evaluate(std::size_t step, double C0) const
+double ArterialInput::evaluate(const std::size_t step, const double C0) const
 {
     const double total = Node::evaluate(step, C0);
-    return total + m_inflow[step] / m_volume;
+    const auto time = step * stepSize();
+
+    const auto input = m_injTime > time ? m_caStrenght * m_injVolume / m_injTime * stepSize() : 0;
+
+    return total + input / volume();
 }
 
-RenalClearence::RenalClearence(int ID, double volume, std::size_t steps, double total_time)
-    : Node(ID, volume, steps, total_time)
+RenalClearence::RenalClearence(int ID, const std::string& name, double volume, double stepSizeMax)
+    : Node(ID, name, volume, stepSizeMax)
 {
 }
 
-double RenalClearence::evaluate(std::size_t step, double C0) const
+double RenalClearence::evaluate(const std::size_t step, const double C0) const
 {
     const double total = Node::evaluate(step, C0);
-    return total - m_renalClearenceRate * C0 / m_volume;
+    return total - m_renalClearenceRate * C0 / volume();
+}
+
+void RenalClearence::setRenalClearenceRate(const double rate) {
+    resetNode();
+    m_renalClearenceRate = rate;
 }

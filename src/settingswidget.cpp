@@ -15,23 +15,55 @@ SettingsWidget::SettingsWidget(QWidget* parent)
     auto mainLayout = new QVBoxLayout(this);
     setLayout(mainLayout);
 
+    auto patient_group = new QGroupBox(tr("Patient data"));
+    auto patient_layout = new QVBoxLayout;
+    patient_group->setLayout(patient_layout);
+    mainLayout->addWidget(patient_group);
+
     //blood volume
-    auto bv_group = new QGroupBox("Patient data", this);
-
-    mainLayout->addWidget(bv_group);
-    mainLayout->addStretch();
-    auto bv_layout = new QVBoxLayout(bv_group);
+    auto bv_group = new QGroupBox(tr("Use calculator"), this);
+    bv_group->setCheckable(true);
+    bv_group->setChecked(true);
+    auto bv_layout = new QVBoxLayout;
+    auto bv_widget = new CalculatorSettingsWidget;
     bv_group->setLayout(bv_layout);
+    bv_layout->addWidget(bv_widget);
+    patient_layout->addWidget(bv_group);
+    connect(bv_widget, &CalculatorSettingsWidget::bloodVolumeChanged, [=](double bv) { emit this->bloodVolumeChanged(bv); });
+    connect(bv_widget, &CalculatorSettingsWidget::renalClearenceChanged, [=](double bv) { emit this->renalClearenceChanged(bv); });
+    connect(bv_widget, &CalculatorSettingsWidget::cardiacOutputChanged, [=](double bv) { emit this->cardiacOutputChanged(bv); });
 
-    auto bv_calculatorBox = new QCheckBox(bv_group);
-    bv_calculatorBox->setCheckState(Qt::Checked);
-    auto bv_calculatorLabel = new QLabel(tr("Use blod volume calculator"));
-    auto bv_calc_layout = new QHBoxLayout();
-    bv_calc_layout->addWidget(bv_calculatorBox);
-    bv_calc_layout->addWidget(bv_calculatorLabel);
-    bv_calc_layout->addStretch();
-    bv_layout->addLayout(bv_calc_layout);
+    auto r_widget = new RawSettingsWidget();
+    patient_layout->addWidget(r_widget);
+    connect(bv_group, &QGroupBox::toggled, r_widget, &RawSettingsWidget::setUseCalculator);
+    connect(bv_widget, &CalculatorSettingsWidget::bloodVolumeChanged, r_widget, &RawSettingsWidget::setBloodVolume);
+    connect(bv_widget, &CalculatorSettingsWidget::cardiacOutputChanged, r_widget, &RawSettingsWidget::setCardiacOutput);
+    connect(bv_widget, &CalculatorSettingsWidget::renalClearenceChanged, r_widget, &RawSettingsWidget::setRenalClearence);
 
+    auto contrast_group = new QGroupBox(tr("Contrast injection"));
+    auto contrast_layout = new QVBoxLayout;
+    contrast_group->setLayout(contrast_layout);
+    mainLayout->addWidget(contrast_group);
+    auto contrast_widget = new ContrastSettingsWidget();
+    contrast_layout->addWidget(contrast_widget);
+    connect(contrast_widget, &ContrastSettingsWidget::volumeChanged, [=](const double v) { emit this->contrastInjectionVolumeChanged(v); });
+    connect(contrast_widget, &ContrastSettingsWidget::timeChanged, [=](const double v) { emit this->contrastInjectionTimeChanged(v); });
+    connect(contrast_widget, &ContrastSettingsWidget::concentrationChanged, [=](const double v) { emit this->contrastInjectionConcentrationChanged(v); });
+
+    mainLayout->addStretch();
+
+    //initializatio
+    emit bv_group->toggled(bv_group->isChecked());
+    bv_widget->calculate();
+}
+
+CalculatorSettingsWidget::CalculatorSettingsWidget(QWidget* parent)
+    : QWidget(parent)
+{
+    auto layout = new QVBoxLayout;
+    setLayout(layout);
+
+    //adding sex button
     auto sex_group = new QGroupBox(tr("Patient sex"));
     auto sex_layout = new QHBoxLayout;
     auto sex_maleButton = new QRadioButton(tr("&Male"));
@@ -40,91 +72,230 @@ SettingsWidget::SettingsWidget(QWidget* parent)
     sex_layout->addWidget(sex_maleButton);
     sex_layout->addWidget(sex_femaleButton);
     sex_group->setLayout(sex_layout);
-    bv_layout->addWidget(sex_group);
-    connect(sex_maleButton, &QRadioButton::toggled, [=](bool toggled) {this->m_patientIsMale=toggled;
-    this->updateBloodVolume(); });
-    connect(sex_femaleButton, &QRadioButton::toggled, [=](bool toggled) {this->m_patientIsMale=!toggled;
-        this->updateBloodVolume(); });
+    layout->addWidget(sex_group);
+    connect(sex_maleButton, &QRadioButton::toggled, [=](bool toggled) {
+        this->m_sexIsMale=toggled;
+        this->calculate(); });
+    connect(sex_femaleButton, &QRadioButton::toggled, [=](bool toggled) {
+        this->m_sexIsMale=!toggled;
+        this->calculate(); });
 
-    auto bv_heightBox = addSpinBox(bv_group, "Patient height:");
-    bv_heightBox->setMinimum(100.0);
-    bv_heightBox->setMaximum(200.0);
-    bv_heightBox->setValue(180.0);
-    bv_heightBox->setSuffix(" cm");
-    auto bv_weightBox = addSpinBox(bv_group, "Patient weight:");
-    bv_weightBox->setMinimum(40.0);
-    bv_weightBox->setMaximum(150.0);
-    bv_weightBox->setValue(80.0);
-    bv_weightBox->setSuffix(" kg");
-
-    m_bloodVolumeSpinBox = addSpinBox(bv_group, "Blood volume for patient:");
-    m_bloodVolumeSpinBox->setSuffix(" ml");
-    m_bloodVolumeSpinBox->setMinimum(2000.0);
-    m_bloodVolumeSpinBox->setMaximum(10000.0);
-    m_bloodVolumeSpinBox->setEnabled(false);
-
-    m_cardiacOutputSpinBox = addSpinBox(bv_group, "Cardiac output for patient:");
-    m_cardiacOutputSpinBox->setSuffix(" ml/min");
-    m_cardiacOutputSpinBox->setMinimum(2000.0);
-    m_cardiacOutputSpinBox->setMaximum(10000.0);
-    m_cardiacOutputSpinBox->setEnabled(false);
-
-    connect(bv_calculatorBox, &QCheckBox::stateChanged, [=](const int state) {
-        bool use_calculator = state == Qt::Checked;
-        bv_heightBox->setEnabled(use_calculator);
-        bv_weightBox->setEnabled(use_calculator);
-        m_bloodVolumeSpinBox->setEnabled(!use_calculator);
-        m_cardiacOutputSpinBox->setEnabled(!use_calculator);
-        sex_group->setEnabled(use_calculator);
-        this->m_useBloodVolumeCalculator = use_calculator;
-        this->updateBloodVolume();
-    });
-
-    connect(bv_heightBox, QOverload<const double>::of(&QDoubleSpinBox::valueChanged), [=](const double height) {
-        this->m_patientHeight = height;
-        this->updateBloodVolume();
-    });
-    connect(bv_weightBox, QOverload<const double>::of(&QDoubleSpinBox::valueChanged), [=](const double weight) {
+    //adding weight
+    auto weight_layout = new QHBoxLayout;
+    auto weight_label = new QLabel(tr("Patient weight"));
+    auto weight_spin = new QDoubleSpinBox();
+    weight_spin->setMinimum(40);
+    weight_spin->setMaximum(150);
+    weight_spin->setValue(m_patientWeight);
+    weight_spin->setSuffix("kg");
+    weight_layout->addWidget(weight_label);
+    weight_layout->addWidget(weight_spin);
+    layout->addLayout(weight_layout);
+    connect(weight_spin, QOverload<const double>::of(&QDoubleSpinBox::valueChanged), [=](const double weight) {
         this->m_patientWeight = weight;
-        this->updateBloodVolume();
+        this->calculate();
     });
 
-    connect(m_bloodVolumeSpinBox, QOverload<const double>::of(&QDoubleSpinBox::valueChanged), [=](const double bv) {
-        this->m_patientBloodVolume = bv;
-        this->updateBloodVolume();
+    //adding height
+    auto height_layout = new QHBoxLayout;
+    auto height_label = new QLabel(tr("Patient height"));
+    auto height_spin = new QDoubleSpinBox();
+    height_spin->setMinimum(150);
+    height_spin->setMaximum(210);
+    height_spin->setValue(m_patientHeight);
+    height_spin->setSuffix("cm");
+    height_layout->addWidget(height_label);
+    height_layout->addWidget(height_spin);
+    layout->addLayout(height_layout);
+    connect(height_spin, QOverload<const double>::of(&QDoubleSpinBox::valueChanged), [=](const double height) {
+        this->m_patientHeight = height;
+        this->calculate();
     });
-    connect(m_cardiacOutputSpinBox, QOverload<const double>::of(&QDoubleSpinBox::valueChanged), [=](const double co) {
-        this->m_patientCardiacOutput = co;
-        this->updateBloodVolume();
+
+    //adding age
+    auto age_layout = new QHBoxLayout;
+    auto age_label = new QLabel(tr("Patient age"));
+    auto age_spin = new QSpinBox();
+    age_spin->setMinimum(12);
+    age_spin->setMaximum(150);
+    age_spin->setValue(m_patientAge);
+    age_spin->setSuffix(tr("yrs"));
+    age_layout->addWidget(age_label);
+    age_layout->addWidget(age_spin);
+    layout->addLayout(age_layout);
+    connect(age_spin, QOverload<const int>::of(&QSpinBox::valueChanged), [=](const int age) {
+        this->m_patientAge = age;
+        this->calculate();
+    });
+
+    //adding creatinine
+    auto c_layout = new QHBoxLayout;
+    auto c_label = new QLabel(tr("Patient serum creatinine"));
+    auto c_spin = new QDoubleSpinBox();
+    c_spin->setMinimum(10);
+    c_spin->setMaximum(500);
+    c_spin->setValue(m_patientCreatinine);
+    c_spin->setSuffix(tr("uMol/l"));
+    c_layout->addWidget(c_label);
+    c_layout->addWidget(c_spin);
+    layout->addLayout(c_layout);
+    connect(c_spin, QOverload<const double>::of(&QDoubleSpinBox::valueChanged), [=](const double c) {
+        this->m_patientCreatinine = c;
+        this->calculate();
     });
 }
 
-void SettingsWidget::updateBloodVolume()
+void CalculatorSettingsWidget::calculate()
 {
-    if (m_useBloodVolumeCalculator) {
-        if (m_patientIsMale) {
-            m_patientBloodVolume = 33.164 * std::pow(0.39370079 * m_patientHeight, 0.725) * std::pow(2.20462262 * m_patientWeight, 0.425) - 1.229;
-        } else {
-            m_patientBloodVolume = 34.85 * std::pow(0.39370079 * m_patientHeight, 0.725) * std::pow(2.20462262 * m_patientWeight, 0.425) - 1.954;
-        }
-        m_patientCardiacOutput = 36.36 * std::pow(0.39370079 * m_patientHeight, 0.725) * std::pow(2.20462262 * m_patientWeight, 0.425);
+    const double a = m_sexIsMale ? 33.164 : 34.85;
+    const double b = m_sexIsMale ? 1.229 : 1.954;
+    const double BV = a * std::pow(m_patientHeight / 2.54, 0.725) * std::pow(m_patientWeight * 2.2, 0.425) - b;
 
-        m_bloodVolumeSpinBox->setEnabled(true);
-        m_bloodVolumeSpinBox->setValue(m_patientBloodVolume);
-        m_bloodVolumeSpinBox->setEnabled(false);
-        m_cardiacOutputSpinBox->setEnabled(true);
-        m_cardiacOutputSpinBox->setValue(m_patientCardiacOutput);
-        m_cardiacOutputSpinBox->setEnabled(false);
+    emit bloodVolumeChanged(BV);
+
+    const double ref = 36.36 * std::pow(m_patientHeight / 2.54, 0.725) * std::pow(m_patientWeight * 2.2, 0.425);
+    const auto CO = ref * (1.0 - (m_patientAge - 30.0) * 1.01 / 100.0);
+    emit cardiacOutputChanged(CO);
+
+    const double Q = m_sexIsMale ? 1 : 0.85;
+    const double RC = Q * ((140.0 - m_patientAge) * m_patientWeight) / (72 * m_patientCreatinine);
+    emit renalClearenceChanged(RC);
+}
+
+RawSettingsWidget::RawSettingsWidget(QWidget* parent)
+    : QWidget(parent)
+{
+    auto layout = new QVBoxLayout;
+    setLayout(layout);
+
+    //adding bv
+    auto bv_layout = new QHBoxLayout;
+    auto bv_label = new QLabel(tr("Patient blood volume"));
+    bv_spin = new QDoubleSpinBox();
+    bv_spin->setMinimum(2000);
+    bv_spin->setMaximum(10000);
+    bv_spin->setSuffix("ml");
+    bv_layout->addWidget(bv_label);
+    bv_layout->addWidget(bv_spin);
+    layout->addLayout(bv_layout);
+    connect(bv_spin, QOverload<const double>::of(&QDoubleSpinBox::valueChanged), [=](const double bv) {
+        emit this->bloodVolumeChanged(bv);
+    });
+
+    //adding co
+    auto co_layout = new QHBoxLayout;
+    auto co_label = new QLabel(tr("Patient cardiac output"));
+    co_spin = new QDoubleSpinBox();
+    co_spin->setMinimum(2000);
+    co_spin->setMaximum(10000);
+    co_spin->setSuffix("ml/min");
+    co_layout->addWidget(co_label);
+    co_layout->addWidget(co_spin);
+    layout->addLayout(co_layout);
+    connect(co_spin, QOverload<const double>::of(&QDoubleSpinBox::valueChanged), [=](const double co) {
+        emit this->cardiacOutputChanged(co);
+    });
+
+    //adding rc
+    auto rc_layout = new QHBoxLayout;
+    auto rc_label = new QLabel(tr("Patient renal clearence"));
+    rc_spin = new QDoubleSpinBox();
+    rc_spin->setMinimum(0.1);
+    rc_spin->setMaximum(1000);
+    rc_spin->setSuffix("ml/min");
+    rc_layout->addWidget(rc_label);
+    rc_layout->addWidget(rc_spin);
+    layout->addLayout(rc_layout);
+    connect(rc_spin, QOverload<const double>::of(&QDoubleSpinBox::valueChanged), [=](const double co) {
+        emit this->renalClearenceChanged(co);
+    });
+}
+
+void RawSettingsWidget::setUseCalculator(bool c)
+{
+    m_useCalculator = c;
+    bv_spin->setDisabled(c);
+    co_spin->setDisabled(c);
+    rc_spin->setDisabled(c);
+}
+
+void RawSettingsWidget::setBloodVolume(double bv)
+{
+    bv_spin->blockSignals(true);
+    bv_spin->setEnabled(true);
+    bv_spin->setValue(bv);
+    bv_spin->setDisabled(m_useCalculator);
+    bv_spin->blockSignals(false);
+}
+void RawSettingsWidget::setCardiacOutput(double bv)
+{
+    co_spin->blockSignals(true);
+    co_spin->setEnabled(true);
+    co_spin->setValue(bv);
+    co_spin->setDisabled(m_useCalculator);
+    co_spin->blockSignals(false);
+}
+void RawSettingsWidget::setRenalClearence(double bv)
+{
+    rc_spin->blockSignals(true);
+    rc_spin->setEnabled(true);
+    rc_spin->setValue(bv);
+    rc_spin->setDisabled(m_useCalculator);
+    rc_spin->blockSignals(false);
+}
+
+ContrastSettingsWidget::ContrastSettingsWidget(QWidget* parent)
+    : QWidget(parent)
+{
+    auto main_layout = new QVBoxLayout;
+    setLayout(main_layout);
+
+    QDoubleSpinBox* spins[4];
+    QString labels[4] = {
+        tr("Injection volume"),
+        tr("Injection time"),
+        tr("Injection rate"),
+        tr("Contrast agent strenght")
+    };
+
+    for (int i = 0; i < 4; ++i) {
+        spins[i] = new QDoubleSpinBox();
+        auto label = new QLabel(labels[i]);
+        auto lay = new QHBoxLayout;
+        lay->addWidget(label);
+        lay->addWidget(spins[i]);
+        main_layout->addLayout(lay);
+        spins[i]->setMinimum(0.0);
+        spins[i]->setMaximum(800.0);
     }
-}
 
-QDoubleSpinBox* SettingsWidget::addSpinBox(QWidget* parent, const QString& description)
-{
-    auto subLayout = new QHBoxLayout();
-    auto sbox = new QDoubleSpinBox(parent);
-    auto label = new QLabel(description, parent);
-    subLayout->addWidget(label);
-    subLayout->addWidget(sbox);
-    parent->layout()->addItem(subLayout);
-    return sbox;
+    spins[0]->setSuffix("ml");
+    spins[1]->setSuffix("s");
+    spins[2]->setSuffix("ml/s");
+    spins[3]->setSuffix("mg/ml Iodine");
+
+    spins[3]->setDecimals(0);
+
+    connect(spins[0], QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](const double v) { emit this->volumeChanged(v); });
+    connect(spins[1], QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](const double time) {
+        const double v = spins[0]->value();
+        const double rate = v / time;
+        spins[2]->blockSignals(true);
+        spins[2]->setValue(rate);
+        spins[2]->blockSignals(false);
+        emit this->timeChanged(time/60.0);
+    });
+    connect(spins[3], QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](const double v) { emit this->concentrationChanged(v); });
+    connect(spins[2], QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](const double rate) {
+        const double v = spins[0]->value();
+        const double time = v / rate;
+        spins[1]->blockSignals(true);
+        spins[1]->setValue(time);
+        spins[1]->blockSignals(false);
+        emit this->timeChanged(time/60.0);        
+    });
+
+    spins[0]->setValue(70);
+    spins[2]->setValue(3);
+    spins[3]->setValue(350);
 }

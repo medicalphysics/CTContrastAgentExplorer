@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>data/organs.csv</file>
+        <file>icons/logo.png</file>
+        <file>icons/splash.png</file>
+    </qresource>
+</RCC>
