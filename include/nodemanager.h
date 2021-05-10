@@ -16,7 +16,7 @@ public:
     double getConcentration(const int nodeID, const double time);
     void resetNodes();
 
-    void setStepSize(const double step);
+    void setTotalTime(const double time);
     void setOrganPS(const double PS);
     void setBolusInjection(const double injection_time, const double volume, const double strenght);
     void setBloodVolume(const double BV);
@@ -32,7 +32,7 @@ protected:
     double renalClearence() const;
 
 private:
-    double m_stepSize = 1 / 60.0;
+    double m_totalTime = 4.0;
     double m_organPS = 4.0 * 60;
     double m_bloodVolume = referenceBloodVolume();
     double m_cardiacOutput = referenceCardiacOutput();

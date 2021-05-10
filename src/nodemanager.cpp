@@ -93,16 +93,16 @@ void NodeManager::readOrganNetworkFromText(const std::vector<std::string>& lines
                     const auto IVvolume = std::stod(strings.at(2));
                     const auto ECvolume = std::stod(strings.at(3));
                     if (ID == 0) {
-                        m_arterialNode = new ArterialInput(ID, name, IVvolume, m_stepSize);
+                        m_arterialNode = new ArterialInput(ID, name, IVvolume, m_totalTime);
                         m_nodes.push_back(m_arterialNode);
                     } else if (ID == 255) {
-                        auto node = new RenalClearence(ID, name, IVvolume, m_stepSize);
+                        m_renalNode = new RenalClearence(ID, name, IVvolume, m_totalTime);
                         if (ECvolume > 0.0) {
-                            node->addOrgan(ECvolume, m_organPS);
+                            m_renalNode->addOrgan(ECvolume, m_organPS);
                         }
-                        m_nodes.push_back(node);
+                        m_nodes.push_back(m_renalNode);
                     } else {
-                        auto node = new Node(ID, name, IVvolume, m_stepSize);
+                        auto node = new Node(ID, name, IVvolume, m_totalTime);
                         if (ECvolume > 0.0) {
                             node->addOrgan(ECvolume, m_organPS);
                         }
@@ -179,11 +179,12 @@ void NodeManager::resetNodes()
     }
 }
 
-void NodeManager::setStepSize(const double step)
+void NodeManager::setTotalTime(const double time)
 {
-    m_stepSize = step;
+    m_totalTime = time;
+
     for (auto n : m_nodes) {
-        n->setStepSize(step);
+        n->setTotalTime(time);
     }
 }
 

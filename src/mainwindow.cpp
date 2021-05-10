@@ -3,6 +3,7 @@
 #include "settingswidget.h"
 
 #include <QSplitter>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -37,11 +38,19 @@ MainWindow::MainWindow(QWidget* parent)
     qRegisterMetaType<SeriesPtr>();
     connect(m_nodeInterface, &NodeManagerInterface::seriesChanged, plotWidget, &PlotWidget::setSeries);
     connect(plotWidget, &PlotWidget::requestSeries, m_nodeInterface, &NodeManagerInterface::requestSeries);
+    connect(plotWidget, &PlotWidget::plotTimeChanged, m_nodeInterface, &NodeManagerInterface::setTotalTime);
+    connect(plotWidget, &PlotWidget::modeHUchanged, m_nodeInterface, &NodeManagerInterface::setUseHUEnhancement);
+    connect(plotWidget, &PlotWidget::kVpChanged, m_nodeInterface, &NodeManagerInterface::setKVp);
 
     m_workerThread.start();
 
     auto sBar = statusBar();
     sBar->showMessage(tr("Created by Erlend Andersen for SSHF"));
+
+    //initialize values
+    QTimer::singleShot(0, [=]() {
+
+    });
 }
 
 MainWindow::~MainWindow()

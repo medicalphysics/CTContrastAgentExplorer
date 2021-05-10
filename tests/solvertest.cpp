@@ -12,14 +12,8 @@ void testNodes()
     const double minStepSize = 1 / 60.0;
 
     ArterialInput* input = new ArterialInput(0, "", 80.0);
-    auto f = [=](double time) -> double {
-        const auto volume = 300.0;
-        const auto rate = 4.0 * 60;
-        const auto end = volume / rate;
-        const double concentration = 1.0;
-        return time <= end ? rate * concentration : 0.0;
-    };
-    input->setInputFunction(f);
+
+    input->setInput(100, .2, 400);
     nodes.push_back(input);
 
     auto vessel1 = new Node(1, "", 80, minStepSize);

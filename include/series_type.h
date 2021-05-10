@@ -7,6 +7,7 @@
 
 struct Series {
     QVector<QList<QPointF>> data;
+    QVector<QPointF> peaks;
     QVector<QString> names;
     double xMin = 0;
     double xMax = 1;

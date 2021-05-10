@@ -5,6 +5,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QRadioButton>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #include <cmath>
@@ -36,9 +37,17 @@ SettingsWidget::SettingsWidget(QWidget* parent)
     auto r_widget = new RawSettingsWidget();
     patient_layout->addWidget(r_widget);
     connect(bv_group, &QGroupBox::toggled, r_widget, &RawSettingsWidget::setUseCalculator);
+    connect(bv_group, &QGroupBox::toggled, [=](auto togg) {
+        if (togg)
+            bv_widget->calculate();
+    });
     connect(bv_widget, &CalculatorSettingsWidget::bloodVolumeChanged, r_widget, &RawSettingsWidget::setBloodVolume);
     connect(bv_widget, &CalculatorSettingsWidget::cardiacOutputChanged, r_widget, &RawSettingsWidget::setCardiacOutput);
     connect(bv_widget, &CalculatorSettingsWidget::renalClearenceChanged, r_widget, &RawSettingsWidget::setRenalClearence);
+
+    connect(r_widget, &RawSettingsWidget::bloodVolumeChanged, [=](double bv) { emit this->bloodVolumeChanged(bv); });
+    connect(r_widget, &RawSettingsWidget::renalClearenceChanged, [=](double bv) { emit this->renalClearenceChanged(bv); });
+    connect(r_widget, &RawSettingsWidget::cardiacOutputChanged, [=](double bv) { emit this->cardiacOutputChanged(bv); });
 
     auto contrast_group = new QGroupBox(tr("Contrast injection"));
     auto contrast_layout = new QVBoxLayout;
@@ -143,6 +152,8 @@ CalculatorSettingsWidget::CalculatorSettingsWidget(QWidget* parent)
         this->m_patientCreatinine = c;
         this->calculate();
     });
+
+    QTimer::singleShot(1, [=]() { this->calculate(); });
 }
 
 void CalculatorSettingsWidget::calculate()
@@ -292,10 +303,12 @@ ContrastSettingsWidget::ContrastSettingsWidget(QWidget* parent)
         spins[1]->blockSignals(true);
         spins[1]->setValue(time);
         spins[1]->blockSignals(false);
-        emit this->timeChanged(time/60.0);        
+        emit this->timeChanged(time / 60.0);
     });
 
-    spins[0]->setValue(70);
-    spins[2]->setValue(3);
-    spins[3]->setValue(350);
+    QTimer::singleShot(1, [=]() {
+        spins[0]->setValue(70);
+        spins[2]->setValue(3);
+        spins[3]->setValue(350);
+    });
 }

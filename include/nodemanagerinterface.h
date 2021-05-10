@@ -25,12 +25,16 @@ public:
     const QMap<int, QString> getOrgans() const;
 
     void requestSeries(QSet<int> IDs);
-    void setTimeOptions(double stop = 7, double step = 0.05);
+    void setTotalTime(double time = 7);
+
+    void setUseHUEnhancement(bool useHU);
+    void setKVp(int kvp);
 
 signals:
     void seriesChanged(SeriesPtr series) const;
 
 protected:
+    static double cToHu(int kvP) ;
     void updateBolus();
     void updateSeries() const;
 
@@ -39,7 +43,10 @@ private:
     double m_injection_time = 1;
     double m_injection_volume = 1;
     double m_injection_concentration = 1;
-    double m_time_stop = 10;
+    double m_totalTime = 10;
     double m_time_step = .05;
+    bool m_calculateHU = false;
+    int m_kVp = 100;
+    
     QSet<int> m_requestedSeries;
 };

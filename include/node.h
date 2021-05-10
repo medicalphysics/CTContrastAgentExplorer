@@ -19,9 +19,10 @@ public:
     double getConcentration(const double time);
     double getConcentration(const std::size_t step);
     double volume() const { return m_volume * m_volumeScaling; }
-    void setStepSize(const double step);
-    double stepSize() const { return m_stepSize; }
-    const std::string& name() const { return m_name; }
+    void setTotalTime(const double time);
+    double stepSize() const { return m_totalTime / (m_concentration.size()-3); }
+    double time() const { return m_totalTime; }
+    std::string name(bool fullName = false) const;
     void setOrganPS(const double PS);
     void resetNode();
     void setCardiacOutputScaling(const double scaling);
@@ -38,8 +39,8 @@ private:
     double m_flowScaling = 1;
     double m_volumeScaling = 1;
     std::size_t m_current_step = 0;
-    std::vector<double> m_concentration;
-    double m_stepSize = 1.0 / 60.0;
+    std::array<double, 1024> m_concentration;
+    double m_totalTime = 5.0;
     Node* m_organPointer = nullptr;
     std::string m_name;
     std::vector<std::pair<double, Node*>> m_inputs;
