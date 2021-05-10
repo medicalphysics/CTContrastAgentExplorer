@@ -147,7 +147,7 @@ void PlotWidget::setSeries(SeriesPtr series)
     m_yAxis->setRange(series->yMin, series->yMax);
 
     //m_xAxis->applyNiceNumbers();
-    m_yAxis->applyNiceNumbers();
+    //m_yAxis->applyNiceNumbers();
 }
 
 void PlotWidget::setPlotTime(const double time)

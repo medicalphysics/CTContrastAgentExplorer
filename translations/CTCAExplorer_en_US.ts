@@ -83,28 +83,28 @@
 <context>
     <name>PlotWidget</name>
     <message>
-        <location filename="../src/plotwidget.cpp" line="23"/>
+        <location filename="../src/plotwidget.cpp" line="24"/>
         <source>Time [seconds]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/plotwidget.cpp" line="25"/>
-        <location filename="../src/plotwidget.cpp" line="164"/>
+        <location filename="../src/plotwidget.cpp" line="26"/>
+        <location filename="../src/plotwidget.cpp" line="165"/>
         <source>Concentration [mg/ml Iodine]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/plotwidget.cpp" line="36"/>
+        <location filename="../src/plotwidget.cpp" line="37"/>
         <source>Total time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/plotwidget.cpp" line="47"/>
+        <location filename="../src/plotwidget.cpp" line="48"/>
         <source>Display CT enhancement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/plotwidget.cpp" line="161"/>
+        <location filename="../src/plotwidget.cpp" line="162"/>
         <source>Enhancement @ </source>
         <translation type="unfinished"></translation>
     </message>

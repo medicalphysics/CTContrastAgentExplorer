@@ -75,27 +75,5 @@ if (WIN32)
     get_filename_component(QT_WINDEPLOYQT_EXECUTABLE ${QT_QMAKE_EXECUTABLE} PATH)
     set(QT_WINDEPLOYQT_EXECUTABLE "${QT_WINDEPLOYQT_EXECUTABLE}/windeployqt.exe")
         add_custom_target(qtdeploy ALL
-       COMMAND ${QT_WINDEPLOYQT_EXECUTABLE} $<TARGET_FILE_DIR:CTCAExplorer>)# --qmldir ${CMAKE_BINARY_DIR} $<TARGET_FILE_DIR:CTCAExplorer>)
+       COMMAND ${QT_WINDEPLOYQT_EXECUTABLE} $<TARGET_FILE_DIR:CTCAExplorer>)
 endif(WIN32)
-
-
-#Copying application resources
-#add_custom_target(addresources ALL)
-#set (fileresources
-#        "resources/icons/splash.png"
-#        "resources/icons/logo.png"
-#        "resources/data/organs.csv"
-#        )
-#foreach(fileresource ${fileresources})
-#        set(outpath "${CMAKE_BINARY_DIR}/${fileresource}")
-#        set(inpath "${CMAKE_CURRENT_SOURCE_DIR}/${fileresource}")
-#        message("Setup copying ${inpath} to ${outpath}")
-#        add_custom_command(TARGET addresources POST_BUILD
-#                COMMENT "Copying file ${inpath} to ${outpath}."
-#                DEPENDS ${inpath}
-#                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#                ${inpath}
-#                ${outpath}
-#        )
-#endforeach()
-
