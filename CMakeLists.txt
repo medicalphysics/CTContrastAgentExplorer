@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(CTCAExplorer LANGUAGES CXX)
+project(CTCAExplorer VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets LinguistTools Charts REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets LinguistTools Charts REQUIRED)
@@ -57,7 +57,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     )
     qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 else()
-    add_executable(CTCAExplorer WIN32
+    add_executable(CTCAExplorer #WIN32
         ${PROJECT_SOURCES}
         ${PROJECT_HEADERS}
     )

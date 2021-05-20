@@ -1,4 +1,4 @@
-#include "..\include\nodemanager.h"
+
 #include "nodemanager.h"
 
 #include <exception>
@@ -93,16 +93,13 @@ void NodeManager::readOrganNetworkFromText(const std::vector<std::string>& lines
                     const auto IVvolume = std::stod(strings.at(2));
                     const auto ECvolume = std::stod(strings.at(3));
                     if (ID == 0) {
-                        m_arterialNode = new ArterialInput(ID, name, IVvolume, m_totalTime);
+                        m_arterialNode = new ArterialInput(ID, name, IVvolume);
                         m_nodes.push_back(m_arterialNode);
                     } else if (ID == 255) {
-                        m_renalNode = new RenalClearence(ID, name, IVvolume, m_totalTime);
-                        if (ECvolume > 0.0) {
-                            m_renalNode->addOrgan(ECvolume, m_organPS);
-                        }
+                        m_renalNode = new RenalClearence(ID, name, IVvolume);                        
                         m_nodes.push_back(m_renalNode);
                     } else {
-                        auto node = new Node(ID, name, IVvolume, m_totalTime);
+                        auto node = new Node(ID, name, IVvolume);
                         if (ECvolume > 0.0) {
                             node->addOrgan(ECvolume, m_organPS);
                         }
@@ -151,10 +148,19 @@ void NodeManager::readOrganNetworkFromText(const std::vector<std::string>& lines
         const auto flowScaling = m_cardiacOutput / referenceCardiacOutput();
         n->setBloodVolumeScaling(volumeScaling);
         n->setCardiacOutputScaling(flowScaling);
+        if (auto organ = n->organ()) {
+            double flow = 0;
+            for (const auto& in : n->inputs()) {
+                flow += in.flow;
+            }
+            n->setOrganPS(4*60.0);
+        }
     }
     if (m_renalNode) {
         m_renalNode->setRenalClearenceRate(m_renalClearenceRate);
     }
+
+    validateNodeFlow();
 }
 
 double NodeManager::getConcentration(const int ID, const double time)
@@ -182,9 +188,11 @@ void NodeManager::resetNodes()
 void NodeManager::setTotalTime(const double time)
 {
     m_totalTime = time;
-
-    for (auto n : m_nodes) {
-        n->setTotalTime(time);
+    if (m_nodes.size() > 0) {
+        const auto step = time / m_nodes[0]->nSteps();
+        for (auto n : m_nodes) {
+            n->setTimeStep(step);
+        }
     }
 }
 
@@ -230,6 +238,45 @@ void NodeManager::setRenalClearenceRate(const double rate)
         m_renalNode->setRenalClearenceRate(rate);
     }
     resetNodes();
+}
+
+bool NodeManager::validateNodeFlow() const
+{
+    std::map<int, double> input_flow;
+    std::map<int, double> output_flow;
+    for (auto n : m_nodes) {
+        auto inputs = n->inputs();
+        if (input_flow.count(n->id()) == 0) {
+            input_flow[n->id()] = 0;
+        }
+        for (auto in : inputs) {
+            if (output_flow.count(in.node->id()) == 0) {
+                output_flow[in.node->id()] = 0;
+            }
+            input_flow[n->id()] += in.flow;
+            output_flow[in.node->id()] += in.flow;
+        }
+    }
+
+    auto in_it = input_flow.cbegin();
+    while (in_it != input_flow.cend()) {
+        auto organ_flow = 0.0;
+        for (auto n : m_nodes) {
+            if (n->id() == in_it->first) {
+                if (n->organ()) {
+                    organ_flow = n->organPS();
+                }
+                std::cout << n->name() << ", ";
+            }
+        }
+        std::cout << in_it->first << ", " << in_it->second << ", " << output_flow[in_it->first];
+        std::cout << ", " << organ_flow;
+        std::cout << std::endl;
+
+        in_it++;
+    }
+
+    return false;
 }
 
 double NodeManager::bloodVolume() const

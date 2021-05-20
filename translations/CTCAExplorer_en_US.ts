@@ -24,27 +24,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/settingswidget.cpp" line="110"/>
+        <location filename="../src/settingswidget.cpp" line="111"/>
         <source>Patient height</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/settingswidget.cpp" line="126"/>
+        <location filename="../src/settingswidget.cpp" line="128"/>
         <source>Patient age</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/settingswidget.cpp" line="131"/>
+        <location filename="../src/settingswidget.cpp" line="133"/>
         <source>yrs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/settingswidget.cpp" line="142"/>
+        <location filename="../src/settingswidget.cpp" line="144"/>
         <source>Patient serum creatinine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/settingswidget.cpp" line="147"/>
+        <location filename="../src/settingswidget.cpp" line="149"/>
         <source>uMol/l</source>
         <translation type="unfinished"></translation>
     </message>
@@ -52,22 +52,22 @@
 <context>
     <name>ContrastSettingsWidget</name>
     <message>
-        <location filename="../src/settingswidget.cpp" line="266"/>
+        <location filename="../src/settingswidget.cpp" line="269"/>
         <source>Injection volume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/settingswidget.cpp" line="267"/>
+        <location filename="../src/settingswidget.cpp" line="270"/>
         <source>Injection time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/settingswidget.cpp" line="268"/>
+        <location filename="../src/settingswidget.cpp" line="271"/>
         <source>Injection rate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/settingswidget.cpp" line="269"/>
+        <location filename="../src/settingswidget.cpp" line="272"/>
         <source>Contrast agent strenght</source>
         <translation type="unfinished"></translation>
     </message>
@@ -112,17 +112,17 @@
 <context>
     <name>RawSettingsWidget</name>
     <message>
-        <location filename="../src/settingswidget.cpp" line="184"/>
+        <location filename="../src/settingswidget.cpp" line="187"/>
         <source>Patient blood volume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/settingswidget.cpp" line="198"/>
+        <location filename="../src/settingswidget.cpp" line="201"/>
         <source>Patient cardiac output</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/settingswidget.cpp" line="212"/>
+        <location filename="../src/settingswidget.cpp" line="215"/>
         <source>Patient renal clearence</source>
         <translation type="unfinished"></translation>
     </message>

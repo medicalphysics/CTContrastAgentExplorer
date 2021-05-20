@@ -97,6 +97,7 @@ CalculatorSettingsWidget::CalculatorSettingsWidget(QWidget* parent)
     weight_spin->setMaximum(150);
     weight_spin->setValue(m_patientWeight);
     weight_spin->setSuffix("kg");
+    weight_spin->setDecimals(0);
     weight_layout->addWidget(weight_label);
     weight_layout->addWidget(weight_spin);
     layout->addLayout(weight_layout);
@@ -113,6 +114,7 @@ CalculatorSettingsWidget::CalculatorSettingsWidget(QWidget* parent)
     height_spin->setMaximum(210);
     height_spin->setValue(m_patientHeight);
     height_spin->setSuffix("cm");
+    height_spin->setDecimals(0);
     height_layout->addWidget(height_label);
     height_layout->addWidget(height_spin);
     layout->addLayout(height_layout);
@@ -145,6 +147,7 @@ CalculatorSettingsWidget::CalculatorSettingsWidget(QWidget* parent)
     c_spin->setMaximum(500);
     c_spin->setValue(m_patientCreatinine);
     c_spin->setSuffix(tr("uMol/l"));
+    c_spin->setDecimals(0);
     c_layout->addWidget(c_label);
     c_layout->addWidget(c_spin);
     layout->addLayout(c_layout);
@@ -158,18 +161,18 @@ CalculatorSettingsWidget::CalculatorSettingsWidget(QWidget* parent)
 
 void CalculatorSettingsWidget::calculate()
 {
-    const double a = m_sexIsMale ? 33.164 : 34.85;
-    const double b = m_sexIsMale ? 1.229 : 1.954;
-    const double BV = a * std::pow(m_patientHeight / 2.54, 0.725) * std::pow(m_patientWeight * 2.2, 0.425) - b;
+    const double a = m_sexIsMale ? 23.6 : 24.8;
+    const double b = m_sexIsMale ? 1229 : 1954;
+    const double BV = a * std::pow(m_patientHeight, 0.725) * std::pow(m_patientWeight, 0.425) - b;
 
     emit bloodVolumeChanged(BV);
 
-    const double ref = 36.36 * std::pow(m_patientHeight / 2.54, 0.725) * std::pow(m_patientWeight * 2.2, 0.425);
+    const double ref = 25.3 * std::pow(m_patientHeight, 0.725) * std::pow(m_patientWeight , 0.425);
     const auto CO = ref * (1.0 - (m_patientAge - 30.0) * 1.01 / 100.0);
     emit cardiacOutputChanged(CO);
 
-    const double Q = m_sexIsMale ? 1 : 0.85;
-    const double RC = Q * ((140.0 - m_patientAge) * m_patientWeight) / (72 * m_patientCreatinine);
+    const double Q = m_sexIsMale ? 1.23 : 1.04;
+    const double RC = Q * (140.0 - m_patientAge) * m_patientWeight / m_patientCreatinine;
     emit renalClearenceChanged(RC);
 }
 
@@ -183,7 +186,7 @@ RawSettingsWidget::RawSettingsWidget(QWidget* parent)
     auto bv_layout = new QHBoxLayout;
     auto bv_label = new QLabel(tr("Patient blood volume"));
     bv_spin = new QDoubleSpinBox();
-    bv_spin->setMinimum(2000);
+    bv_spin->setMinimum(100);
     bv_spin->setMaximum(10000);
     bv_spin->setSuffix("ml");
     bv_layout->addWidget(bv_label);
@@ -197,7 +200,7 @@ RawSettingsWidget::RawSettingsWidget(QWidget* parent)
     auto co_layout = new QHBoxLayout;
     auto co_label = new QLabel(tr("Patient cardiac output"));
     co_spin = new QDoubleSpinBox();
-    co_spin->setMinimum(2000);
+    co_spin->setMinimum(100);
     co_spin->setMaximum(10000);
     co_spin->setSuffix("ml/min");
     co_layout->addWidget(co_label);
@@ -307,8 +310,8 @@ ContrastSettingsWidget::ContrastSettingsWidget(QWidget* parent)
     });
 
     QTimer::singleShot(1, [=]() {
-        spins[0]->setValue(70);
-        spins[2]->setValue(3);
-        spins[3]->setValue(350);
+        spins[0]->setValue(125);
+        spins[2]->setValue(2.5);
+        spins[3]->setValue(320);
     });
 }

@@ -23,6 +23,8 @@ public:
     void setCardiacOutput(const double CO);
     void setRenalClearenceRate(const double rate);
 
+    bool validateNodeFlow() const;
+
 protected:
     void readOrganNetworkFromText(const std::vector<std::string>& lines);
     constexpr double referenceCardiacOutput() const { return 6500; }
