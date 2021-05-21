@@ -16,17 +16,17 @@ void testNodes()
     input->setInput(100, .2, 400);
     nodes.push_back(input);
 
-    auto vessel1 = new Node(1, "", 80, minStepSize);
+    auto vessel1 = new Node(1, "", 80);
     nodes.push_back(vessel1);
 
-    auto organ1 = new Node(2, "", 37.0, minStepSize);
+    auto organ1 = new Node(2, "", 37.0);
     organ1->addOrgan(484.0);
     nodes.push_back(organ1);
 
-    auto vessel2 = new Node(3, "", 80, minStepSize);
+    auto vessel2 = new Node(3, "", 80);
     nodes.push_back(vessel2);
 
-    auto kidney = new RenalClearence(4, "", 54, minStepSize);
+    auto kidney = new RenalClearence(4, "", 54);
     kidney->addOrgan(89.0);
     nodes.push_back(kidney);
 

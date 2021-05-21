@@ -96,10 +96,10 @@ void PlotWidget::setupListView()
     model->sort(0);
     qRegisterMetaType<QSet<int>>();
     connect(model, &QStandardItemModel::itemChanged, this, &PlotWidget::listItemChanged);
-    view->setSizePolicy(QSizePolicy::Policy::Minimum, QSizePolicy::Policy::MinimumExpanding);
-    auto sizehint = view->sizeHintForColumn(0);
+    //view->setSizePolicy(QSizePolicy::Policy::Minimum, QSizePolicy::Policy::MinimumExpanding);
+    //auto sizehint = view->sizeHintForColumn(0);
     //view->setMaximumSize(view->viewportSizeHint());
-    view->setMaximumWidth(sizehint);
+    //view->setMaximumWidth(sizehint);
 }
 
 void PlotWidget::setAvailableOrgans(const QMap<int, QString>& organs)
