@@ -74,6 +74,8 @@ if (WIN32)
     get_target_property(QT_QMAKE_EXECUTABLE Qt${QT_VERSION_MAJOR}::qmake IMPORTED_LOCATION)
     get_filename_component(QT_WINDEPLOYQT_EXECUTABLE ${QT_QMAKE_EXECUTABLE} PATH)
     set(QT_WINDEPLOYQT_EXECUTABLE "${QT_WINDEPLOYQT_EXECUTABLE}/windeployqt.exe")
-        add_custom_target(qtdeploy ALL
-       COMMAND ${QT_WINDEPLOYQT_EXECUTABLE} $<TARGET_FILE_DIR:CTCAExplorer>)
+    add_custom_command(
+        TARGET CTCAExplorer POST_BUILD
+        COMMAND ${QT_WINDEPLOYQT_EXECUTABLE} $<TARGET_FILE_DIR:CTCAExplorer>
+    )
 endif(WIN32)

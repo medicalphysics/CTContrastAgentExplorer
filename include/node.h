@@ -3,11 +3,9 @@
 #include <array>
 #include <concepts>
 #include <functional>
+#include <string>
 #include <utility>
 #include <vector>
-
-
-
 
 class Node;
 
@@ -17,15 +15,14 @@ struct Input {
     Node* node = nullptr;
 };
 
-
 class Node {
 public:
-    Node(int ID, const std::string& name, const double volume, bool isVascular=true);
+    Node(int ID, const std::string& name, const double volume, bool isVascular = true);
     virtual ~Node();
     int id() const { return m_ID; }
     void changeID(const int ID);
 
-    void addInputNode(Node* node, double flow, double delay=0.0);
+    void addInputNode(Node* node, double flow, double delay = 0.0);
     void addOrgan(double volume, double PS = 240.0);
     Node* organ() const { return m_organPointer; }
     double getConcentration(const double time);
@@ -33,7 +30,7 @@ public:
     double volume() const { return m_volume * m_volumeScaling; }
     double volumeEES() const { return m_isVascular ? volume() * 0.48 : volume() * 0.04; }
     void setTimeStep(const double time);
-    double timeStep() const {return  m_timeStep; }
+    double timeStep() const { return m_timeStep; }
     std::string name(bool fullName = false) const;
     void setOrganPS(const double PS);
     auto organPS() const { return m_ps; }
@@ -68,7 +65,6 @@ class ArterialInput : public Node {
 public:
     ArterialInput(int ID, const std::string& name, double volume);
 
-    
     void setInput(double volume, double time, double strenght)
     {
         m_injVolume = volume;
@@ -84,7 +80,6 @@ private:
     double m_injVolume = 1;
     double m_injTime = 1;
     double m_caStrenght = 1;
-
 };
 
 class RenalClearence : public Node {
