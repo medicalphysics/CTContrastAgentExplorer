@@ -72,6 +72,10 @@ PlotWidget::PlotWidget(const QMap<int, QString>& organs, QWidget* parent)
     buttonslayout->addWidget(saveButton);
     connect(saveButton, &QPushButton::clicked, this, &PlotWidget::savePlot);
 
+    auto copyButton = new QPushButton("Copy data");
+    buttonslayout->addWidget(copyButton);
+    connect(copyButton, &QPushButton::clicked, this, &PlotWidget::copyPlotDataClipboard);
+
     setAvailableOrgans(organs);
 
     QTimer::singleShot(0, [=]() { time_spin->setValue(7.0); });
@@ -112,10 +116,38 @@ void PlotWidget::setAvailableOrgans(const QMap<int, QString>& organs)
     setupListView();
 }
 
+QString createHTMLTable(SeriesPtr series)
+{
+    if (!series)
+        return "";
+    if (series->data.size() == 0)
+        return "";
+
+    QString table;
+    table += "<table><tr><td>Time [s]</td>";
+    for (const auto& name : series->names)
+        table += "<td>" + name + "</td>";
+    table += "</tr>";
+
+    const auto size = series->data[0].size();
+    for (int i = 0; i < size; ++i) {
+        table += "<tr>";
+        const auto& s0 = (series->data)[0][i];
+        table += "<td>" + QString::number(s0.x()) + "</td>";
+        for (const auto& s : series->data) {
+            table += "<td>" + QString::number(s[i].y()) + "</td>";
+        }
+        table += "</tr>";
+    }
+    return table + "</table>";
+}
+
 void PlotWidget::setSeries(SeriesPtr series)
 {
     if (!series)
         return;
+
+    m_htmlTable = createHTMLTable(series);
     m_chart->removeAllSeries();
 
     for (int i = 0; i < series->data.size(); ++i) {
@@ -181,8 +213,8 @@ void PlotWidget::savePlot()
     if (m_chartView) {
 
         auto path = QFileDialog::getSaveFileName(this, "Save image", "untitled.png", "Images (*.png)");
-        const auto dpr = m_chartView->devicePixelRatioF();        
-        QPixmap pixmap(m_chartView->width()*dpr, m_chartView->height()*dpr);
+        const auto dpr = m_chartView->devicePixelRatioF();
+        QPixmap pixmap(m_chartView->width() * dpr, m_chartView->height() * dpr);
         pixmap.setDevicePixelRatio(dpr);
         pixmap.fill(Qt::transparent);
         QPainter painter(&pixmap);
@@ -191,6 +223,14 @@ void PlotWidget::savePlot()
         m_chartView->render(&painter);
         pixmap.save(path);
     }
+}
+
+void PlotWidget::copyPlotDataClipboard()
+{
+    QClipboard* clipboard = QGuiApplication::clipboard();
+    auto mimeData = new QMimeData;
+    mimeData->setHtml(m_htmlTable);
+    clipboard->setMimeData(mimeData);
 }
 
 void PlotWidget::listItemChanged(QStandardItem* item)

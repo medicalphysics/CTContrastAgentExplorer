@@ -21,6 +21,7 @@ public:
     void setAxisShowHU(bool showHU);
     void setkVp(int kvp);
     void savePlot();
+    void copyPlotDataClipboard();
 
 signals:
     void requestSeries(QSet<int>);
@@ -42,4 +43,5 @@ private:
     QtCharts::QChartView* m_chartView = nullptr;
     QtCharts::QValueAxis* m_xAxis = nullptr;
     QtCharts::QValueAxis* m_yAxis = nullptr;
+    QString m_htmlTable;
 };
