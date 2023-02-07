@@ -31,7 +31,7 @@ public:
     void setKVp(int kvp);
 
 signals:
-    void seriesChanged(SeriesPtr series) const;
+    void seriesChanged(SeriesPtr series) const;    
 
 protected:
     static double cToHu(int kvP) ;

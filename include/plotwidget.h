@@ -20,6 +20,7 @@ public:
     void setPlotTime(const double time);
     void setAxisShowHU(bool showHU);
     void setkVp(int kvp);
+    void savePlot();
 
 signals:
     void requestSeries(QSet<int>);

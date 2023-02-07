@@ -68,6 +68,10 @@ PlotWidget::PlotWidget(const QMap<int, QString>& organs, QWidget* parent)
         this->setAxisShowHU(toggled);
     });
 
+    auto saveButton = new QPushButton("Save plot");
+    buttonslayout->addWidget(saveButton);
+    connect(saveButton, &QPushButton::clicked, this, &PlotWidget::savePlot);
+
     setAvailableOrgans(organs);
 
     QTimer::singleShot(0, [=]() { time_spin->setValue(7.0); });
@@ -96,10 +100,10 @@ void PlotWidget::setupListView()
     model->sort(0);
     qRegisterMetaType<QSet<int>>();
     connect(model, &QStandardItemModel::itemChanged, this, &PlotWidget::listItemChanged);
-    //view->setSizePolicy(QSizePolicy::Policy::Minimum, QSizePolicy::Policy::MinimumExpanding);
-    //auto sizehint = view->sizeHintForColumn(0);
-    //view->setMaximumSize(view->viewportSizeHint());
-    //view->setMaximumWidth(sizehint);
+    // view->setSizePolicy(QSizePolicy::Policy::Minimum, QSizePolicy::Policy::MinimumExpanding);
+    // auto sizehint = view->sizeHintForColumn(0);
+    // view->setMaximumSize(view->viewportSizeHint());
+    // view->setMaximumWidth(sizehint);
 }
 
 void PlotWidget::setAvailableOrgans(const QMap<int, QString>& organs)
@@ -146,8 +150,8 @@ void PlotWidget::setSeries(SeriesPtr series)
     m_xAxis->setRange(series->xMin, m_totalTime * 60);
     m_yAxis->setRange(series->yMin, series->yMax);
 
-    //m_xAxis->applyNiceNumbers();
-    //m_yAxis->applyNiceNumbers();
+    // m_xAxis->applyNiceNumbers();
+    // m_yAxis->applyNiceNumbers();
 }
 
 void PlotWidget::setPlotTime(const double time)
@@ -170,6 +174,23 @@ void PlotWidget::setkVp(int kvp)
 {
     m_kVp = kvp;
     setAxisShowHU(true);
+}
+
+void PlotWidget::savePlot()
+{
+    if (m_chartView) {
+
+        auto path = QFileDialog::getSaveFileName(this, "Save image", "untitled.png", "Images (*.png)");
+        const auto dpr = m_chartView->devicePixelRatioF();        
+        QPixmap pixmap(m_chartView->width()*dpr, m_chartView->height()*dpr);
+        pixmap.setDevicePixelRatio(dpr);
+        pixmap.fill(Qt::transparent);
+        QPainter painter(&pixmap);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        painter.setRenderHint(QPainter::TextAntialiasing, true);
+        m_chartView->render(&painter);
+        pixmap.save(path);
+    }
 }
 
 void PlotWidget::listItemChanged(QStandardItem* item)

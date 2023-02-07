@@ -89,7 +89,7 @@
     </message>
     <message>
         <location filename="../src/plotwidget.cpp" line="26"/>
-        <location filename="../src/plotwidget.cpp" line="165"/>
+        <location filename="../src/plotwidget.cpp" line="169"/>
         <source>Concentration [mg/ml Iodine]</source>
         <translation type="unfinished"></translation>
     </message>
@@ -104,7 +104,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/plotwidget.cpp" line="162"/>
+        <location filename="../src/plotwidget.cpp" line="166"/>
         <source>Enhancement @ </source>
         <translation type="unfinished"></translation>
     </message>
