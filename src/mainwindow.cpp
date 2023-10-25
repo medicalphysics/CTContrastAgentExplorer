@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     auto mainWidget = new QSplitter(Qt::Horizontal, this);
+    layout()->addWidget(mainWidget);
     setCentralWidget(mainWidget);
 
     auto settingsWidget = new SettingsWidget(mainWidget);
@@ -18,16 +19,18 @@ MainWindow::MainWindow(QWidget* parent)
 
     auto plotWidget = new PlotWidget(m_nodeInterface->getOrgans(), mainWidget);
     mainWidget->addWidget(plotWidget);
+    mainWidget->addWidget(plotWidget->setupListView());
 
-    settingsWidget->setSizePolicy(QSizePolicy::Policy::Maximum, QSizePolicy::Policy::Maximum);
-    plotWidget->setSizePolicy(QSizePolicy::Policy::MinimumExpanding, QSizePolicy::Policy::MinimumExpanding);
     mainWidget->setStretchFactor(0, 1);
     mainWidget->setStretchFactor(1, 1000);
+    mainWidget->setStretchFactor(1, 10);
+    
+
 
     m_nodeInterface->moveToThread(&m_workerThread);
     connect(&m_workerThread, &QThread::finished, m_nodeInterface, &NodeManagerInterface::deleteLater);
 
-    //connections here
+    // connections here
     connect(settingsWidget, &SettingsWidget::bloodVolumeChanged, m_nodeInterface, &NodeManagerInterface::setBloodVolume);
     connect(settingsWidget, &SettingsWidget::cardiacOutputChanged, m_nodeInterface, &NodeManagerInterface::setCardiacOutput);
     connect(settingsWidget, &SettingsWidget::renalClearenceChanged, m_nodeInterface, &NodeManagerInterface::setRenalClearenceRate);
@@ -47,7 +50,7 @@ MainWindow::MainWindow(QWidget* parent)
     auto sBar = statusBar();
     sBar->showMessage(tr("Created by Erlend Andersen for SSHF"));
 
-    //initialize values
+    // initialize values
     QTimer::singleShot(0, [=]() {
 
     });

@@ -7,12 +7,10 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets LinguistTools Charts REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets LinguistTools Charts REQUIRED)
+
+find_package(Qt6 COMPONENTS Widgets Gui LinguistTools Charts REQUIRED)
+qt_standard_project_setup()
 
 set(TS_FILES translations/CTCAExplorer_en_US.ts)
 set(RS_FILES resources/resources.qrc)
@@ -47,25 +45,32 @@ set(PROJECT_HEADERS
 
 
 
-add_library(Solver ${SOLVER_HEADERS} ${SOLVER_SOURCES})
+qt_add_library(Solver STATIC ${SOLVER_HEADERS} ${SOLVER_SOURCES})
 target_include_directories(Solver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(CTCAExplorer WIN32
-        ${PROJECT_SOURCES}
-        ${PROJECT_HEADERS}
-    )
-    qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-else()
-    add_executable(CTCAExplorer WIN32
-        ${PROJECT_SOURCES}
-        ${PROJECT_HEADERS}
-    )
-    qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-endif()
+qt_add_executable(CTCAExplorer WIN32
+    ${PROJECT_SOURCES}
+    ${PROJECT_HEADERS}
+)
+
+set_target_properties(CTCAExplorer PROPERTIES
+    WIN32_EXECUTABLE ON
+    MACOSX_BUNDLE ON
+)
+
+qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 
 target_link_libraries(CTCAExplorer PRIVATE Solver Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
 target_include_directories(CTCAExplorer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+
+qt_add_resources(CTCAExplorer "data"
+    BASE "resources/"
+    FILES 
+    resources/data/organs.csv 
+    resources/icons/logo.png 
+    resources/icons/splash.png
+)
 
 add_subdirectory(tests)
 
@@ -101,11 +106,26 @@ install(TARGETS CTCAExplorer
 if(WIN32)
     install(DIRECTORY "${WIN_DEPLOY_QT}" DESTINATION bin)
 endif()
+
 # Packaging
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "CTCAExplorer")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "CT contrast agent model")
 set(CPACK_NSIS_MODIFY_PATH "ON")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_PROJECT_NAME}-${PROJECT_VERSION_MAJOR}-${PROJECT_VERSION_MINOR}")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_PROJECT_NAME}")
 set(CPACK_PACKAGE_VENDOR "Erlend Andersen")
+if(WIN32)
+    set(CPACK_SOURCE_GENERATOR "TGZ")
+    set(CPACK_NSIS_MODIFY_PATH "ON")
+    set(CPACK_NSIS_CREATE_ICONS_EXTRA
+    "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\CTCAExplorer.lnk' '$INSTDIR\\\\bin\\\\CTCAExplorer.exe'"
+    )
+    set(CPACK_NSIS_DELETE_ICONS_EXTRA
+    "Delete '$SMPROGRAMS\\\\$START_MENU\\\\CTCAExplorer.lnk'"
+)
+endif()
 include(CPack)
+
+
+
+

@@ -17,17 +17,17 @@ PlotWidget::PlotWidget(const QMap<int, QString>& organs, QWidget* parent)
     chartLayout->setContentsMargins(0, 0, 0, 0);
     layout->addLayout(chartLayout);
 
-    m_chart = new QtCharts::QChart();
-    m_chart->setAnimationOptions(QtCharts::QChart::NoAnimation);
+    m_chart = new QChart();
+    m_chart->setAnimationOptions(QChart::NoAnimation);
 
-    m_xAxis = new QtCharts::QValueAxis();
+    m_xAxis = new QValueAxis();
     m_xAxis->setTitleText(tr("Time [seconds]"));
-    m_yAxis = new QtCharts::QValueAxis();
+    m_yAxis = new QValueAxis();
     m_yAxis->setTitleText(tr("Concentration [mg/ml Iodine]"));
     m_chart->addAxis(m_yAxis, Qt::AlignLeft);
     m_chart->addAxis(m_xAxis, Qt::AlignBottom);
 
-    m_chartView = new QtCharts::QChartView(m_chart);
+    m_chartView = new QChartView(m_chart);
     m_chartView->setRenderHint(QPainter::Antialiasing);
 
     chartLayout->addWidget(m_chartView);
@@ -52,7 +52,7 @@ PlotWidget::PlotWidget(const QMap<int, QString>& organs, QWidget* parent)
     group_kvp->setLayout(group_layout);
     auto group_select = new QComboBox();
     for (int k = 70; k < 151; k += 10) {
-        auto text = QString::number(k) + QString("kVp");
+        auto text = QString::number(k) + QString(" kVp");
         group_select->addItem(text, k);
     }
     group_layout->addWidget(group_select);
@@ -62,6 +62,7 @@ PlotWidget::PlotWidget(const QMap<int, QString>& organs, QWidget* parent)
     connect(group_select, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index) {
         this->m_kVp = group_select->currentData().toInt();
         emit this->kVpChanged(this->m_kVp);
+        this->setAxisShowHU(true);
     });
     connect(group_kvp, &QGroupBox::toggled, [=](bool toggled) {
         emit this->modeHUchanged(toggled);
@@ -76,14 +77,14 @@ PlotWidget::PlotWidget(const QMap<int, QString>& organs, QWidget* parent)
     buttonslayout->addWidget(copyButton);
     connect(copyButton, &QPushButton::clicked, this, &PlotWidget::copyPlotDataClipboard);
 
-    setAvailableOrgans(organs);
+    m_organs = organs;
 
     QTimer::singleShot(0, [=]() { time_spin->setValue(7.0); });
     QTimer::singleShot(0, [=]() { group_select->setCurrentIndex(3); });
     QTimer::singleShot(0, [=]() { group_kvp->setChecked(false); });
 }
 
-void PlotWidget::setupListView()
+QListView* PlotWidget::setupListView()
 {
     auto mainLayout = layout();
     auto view = new QListView();
@@ -108,12 +109,7 @@ void PlotWidget::setupListView()
     // auto sizehint = view->sizeHintForColumn(0);
     // view->setMaximumSize(view->viewportSizeHint());
     // view->setMaximumWidth(sizehint);
-}
-
-void PlotWidget::setAvailableOrgans(const QMap<int, QString>& organs)
-{
-    m_organs = organs;
-    setupListView();
+    return view;
 }
 
 QString createHTMLTable(SeriesPtr series)
@@ -153,19 +149,19 @@ void PlotWidget::setSeries(SeriesPtr series)
     for (int i = 0; i < series->data.size(); ++i) {
         const auto& s = series->data[i];
         const auto& name = series->names[i];
-        auto c = new QtCharts::QSplineSeries();
+        auto c = new QSplineSeries();
         c->append(s);
         c->setName(name);
         m_chart->addSeries(c);
         c->attachAxis(m_xAxis);
         c->attachAxis(m_yAxis);
 
-        auto p = new QtCharts::QScatterSeries();
+        auto p = new QScatterSeries();
         p->append(series->peaks[i]);
         p->setPointLabelsVisible(true);
         p->setColor(c->color());
         p->setMarkerSize(1.0);
-        p->setMarkerShape(QtCharts::QScatterSeries::MarkerShape::MarkerShapeCircle);
+        p->setMarkerShape(QScatterSeries::MarkerShape::MarkerShapeCircle);
         p->setPointLabelsClipping(false);
         p->setPointLabelsFormat("@xPoints");
         m_chart->addSeries(p);

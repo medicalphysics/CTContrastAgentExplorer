@@ -16,3 +16,4 @@ struct Series {
 };
 
 using SeriesPtr = QSharedPointer<Series>;
+Q_DECLARE_METATYPE(SeriesPtr)

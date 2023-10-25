@@ -312,6 +312,6 @@ ContrastSettingsWidget::ContrastSettingsWidget(QWidget* parent)
     QTimer::singleShot(1, [=]() {
         spins[0]->setValue(125);
         spins[2]->setValue(2.5);
-        spins[3]->setValue(320);
+        spins[3]->setValue(350);
     });
 }

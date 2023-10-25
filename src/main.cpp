@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     app.setWindowIcon(QIcon(":/icons/logo.png"));
 
     MainWindow win;
-    QString title = "CAExplorer v";
+    QString title = "CAExplorer";
     win.setWindowTitle(title);
     win.show();
 
